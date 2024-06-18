@@ -5,7 +5,7 @@
 #include <netinet/ether.h>
 #include <string>
 #include <sstream>
-#include "TcpMessage.cpp"
+#include "TcpMessage.hpp"
 
 extern std::vector<TcpMessage*>& getTcpMessageList();
 
