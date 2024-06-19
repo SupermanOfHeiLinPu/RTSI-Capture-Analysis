@@ -20,6 +20,8 @@ public:
 
 class TcpCapture {
 public:
+    TcpCapture() = default;
+    virtual ~TcpCapture() = default;
     virtual void analysis(const TcpMessage&) = 0;
     virtual void established(const TcpMessage&) = 0;
     virtual void close(const TcpMessage&) = 0;

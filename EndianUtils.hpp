@@ -10,7 +10,7 @@ public:
     template<typename T>
     static void unpack(const std::vector<uint8_t>::const_iterator& message, T& out_value) {
         static_assert(std::is_fundamental<T>::value, "must use base type");
-        uint8_t* p_out = (uint8_t)&out_value;
+        uint8_t* p_out = (uint8_t*)&out_value;
         if (sizeof(T) == 8) {
             p_out[0] = *(message + 7);
             p_out[1] = *(message + 6);

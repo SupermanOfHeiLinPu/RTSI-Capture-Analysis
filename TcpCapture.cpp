@@ -95,7 +95,6 @@ void packet_handler(u_char *user_data, const struct pcap_pkthdr *pkthdr, const u
             tc[i]->close(tm);
         };
     } else if(payload_length > 0) {
-        printMessage(tm);
         for (size_t i = 0; i < tc.size(); i++) {
             tc[i]->analysis(tm);
         }
