@@ -11,25 +11,30 @@
 extern std::vector<TcpCapture*>& getTcpMessageList();
 
 void printMessage(const TcpMessage& tmd) {
-    // std::cout << "Ethernet header source MAC: " << tmd.src_mac << std::endl;
-    // std::cout << "Source IP: " << tmd.src_ip << std::endl;
-    // std::cout << "Destination IP: " << tmd.dst_ip<< std::endl;
-    // std::cout << "Source port: " << tmd.src_port << std::endl;
-    // std::cout << "Destination port: " << tmd.dst_port << std::endl;
-    // std::cout << "Payload " << tmd.data.size() << ": ";
-    // for (int i = 0; i < tmd.data.size(); i++) {
-    //     if (i % 16 == 0)
-    //         printf("\n");
-    //     printf("%x ", (unsigned char)tmd.data[i]);
-    // }
-    // std::cout << std::endl;
-    // std::cout << std::endl;
+    std::cout << "Timestamp: " << tmd.time_sec << "." << tmd.time_us << std::endl;
+    std::cout << "Ethernet header source MAC: " << tmd.src_mac << std::endl;
+    std::cout << "Source IP: " << tmd.src_ip << std::endl;
+    std::cout << "Destination IP: " << tmd.dst_ip<< std::endl;
+    std::cout << "Source port: " << tmd.src_port << std::endl;
+    std::cout << "Destination port: " << tmd.dst_port << std::endl;
+    std::cout << "Payload " << tmd.data.size() << ": ";
+    for (int i = 0; i < tmd.data.size(); i++) {
+        if (i % 16 == 0)
+            printf("\n");
+        printf("%02x ", (unsigned char)tmd.data[i]);
+    }
+    std::cout << std::endl;
+    std::cout << std::endl;
 }
 
 
 // 回调函数，当捕获到数据包时调用
 void packet_handler(u_char *user_data, const struct pcap_pkthdr *pkthdr, const u_char *packet) {
     TcpMessage tm;
+
+    // 获取时间戳
+    tm.time_sec = pkthdr->ts.tv_sec;
+    tm.time_us = pkthdr->ts.tv_usec;
 
     // 计算TCP payload 长度以及获取payload指针
     const struct ip* ip_header = (struct ip *)(packet + sizeof(struct ether_header));;
@@ -82,23 +87,15 @@ void packet_handler(u_char *user_data, const struct pcap_pkthdr *pkthdr, const u
     std::vector<TcpCapture*>& tc = getTcpMessageList();
     // Check TCP flags
     if (tcpHeader->syn && !tcpHeader->ack) {
-        std::cout << "established" << std::endl;
-        printMessage(tm);
-
         for (size_t i = 0; i < tc.size(); i++) {
             tc[i]->established(tm);
         }
     } else if (tcpHeader->fin) {
-        std::cout << "close" << std::endl;
-        printMessage(tm);
-
         for (size_t i = 0; i < tc.size(); i++) {
             tc[i]->close(tm);
         };
     } else if(payload_length > 0) {
-        std::cout << "analysis" << std::endl;
         printMessage(tm);
-
         for (size_t i = 0; i < tc.size(); i++) {
             tc[i]->analysis(tm);
         }

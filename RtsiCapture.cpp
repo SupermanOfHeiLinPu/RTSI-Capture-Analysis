@@ -1,4 +1,5 @@
 #include "RtsiCapture.hpp"
+#include "EndianUtils.hpp"
 #include <string>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
@@ -27,37 +28,49 @@ static std::unordered_map<std::string, std::string> get_eth_list() {
 
 RtsiCapture::RtsiCapture() {
     auto eth_list = get_eth_list();
-    host_id_ = eth_list["enp5s0"] + "30004";
+    host_id_ = buildID(eth_list["enp5s0"], 30004);
 }
 
-void RtsiCapture::analysis(const TcpMessage& msg) {
-    std::string src_id = msg.src_ip + std::to_string(msg.src_port);
-    if (connection_.find(src_id) == connection_.end()) {
-        auto con = std::make_shared<RtsiConnection>(host_id_);
-        connection_.insert({src_id, con});
+std::string RtsiCapture::buildID(const std::string& ip, int port) {
+    return ip + ":" + std::to_string(port);
+}
+
+std::string RtsiCapture::buildID(const TcpMessage& tm) {
+    return buildID(tm.src_ip, tm.src_port);
+}
+
+void RtsiCapture::analysis(const TcpMessage& tm) {
+    std::string client_id = buildID(tm);
+    if (client_id == host_id_) {
+        client_id = buildID(tm.dst_ip, tm.dst_port);
     }
-    connection_[src_id]->analysis(msg);
+    
+    if (connection_.find(client_id) == connection_.end()) {
+        auto con = std::make_shared<RtsiConnection>(host_id_);
+        connection_.insert({client_id, con});
+    }
+    connection_[client_id]->analysis(tm);
 }
 
 void RtsiCapture::established(const TcpMessage& msg) {
-    std::string src_id = msg.src_ip + std::to_string(msg.src_port);
-    if (host_id_ == src_id) {
+    std::string client_id = buildID(msg);
+    if (host_id_ == client_id) {
         return;
     }
-    if (connection_.find(src_id) != connection_.end()) {
-        connection_.erase(src_id);
+    if (connection_.find(client_id) != connection_.end()) {
+        connection_.erase(client_id);
     }
     auto con = std::make_shared<RtsiConnection>(host_id_);
-    connection_.insert({src_id, con});
+    connection_.insert({client_id, con});
 }
 
 void RtsiCapture::close(const TcpMessage& msg) {
-    std::string src_id = msg.src_ip + std::to_string(msg.src_port);
-    if (host_id_ == src_id) {
+    std::string client_id = buildID(msg);
+    if (host_id_ == client_id) {
         return;
     }
-    if (connection_.find(src_id) != connection_.end()) {
-        connection_.erase(src_id);
+    if (connection_.find(client_id) != connection_.end()) {
+        connection_.erase(client_id);
     }
 }
 
@@ -71,4 +84,29 @@ RtsiConnection::~RtsiConnection() {
 }
 
 void RtsiConnection::analysis(const TcpMessage& tm) {
+    if(buffer_.size() > 0) {
+        buffer_.insert(buffer_.end(), tm.data.begin(), tm.data.end());
+        int parser_len = 0;
+        if(!parser(buffer_, parser_len)) {
+            // TODO
+        }
+        // remove parsered message
+        if (parser_len > 0) {
+            buffer_.erase(buffer_.begin(), buffer_.begin() + parser_len);
+        }
+    } else {
+        int parser_len = 0;
+        if(!parser(buffer_, parser_len)) {
+            // TODO
+        }
+        // Adds the remaining unparsed packets to the buffer
+        if (parser_len < tm.data.size()) {
+            buffer_.insert(buffer_.end(), tm.data.begin() + parser_len, tm.data.end());
+        }
+    }
+}
+
+bool RtsiConnection::parser(const std::vector<uint8_t>& msg, int& parser_len) {
+    parser_len = msg.size();
+    return true;
 }

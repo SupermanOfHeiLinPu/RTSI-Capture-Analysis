@@ -4,9 +4,12 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <ctime>
 
 class TcpMessage {
 public:
+    time_t time_sec;
+    suseconds_t time_us;
     int src_port;
     int dst_port;
     std::string src_ip;
