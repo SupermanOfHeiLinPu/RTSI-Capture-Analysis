@@ -2,10 +2,14 @@ cmake_minimum_required (VERSION 3.22.1)
 
 project (rtsi_analysis)
 
+set(CMAKE_CXX_STANDARD 14)
+
 add_executable(
     ${PROJECT_NAME}
+    RtsiCapture.cpp
     TcpMessage.cpp
     TcpCapture.cpp
+    main.cpp
 )
 
 target_include_directories(
@@ -16,5 +20,5 @@ target_include_directories(
 
 target_link_libraries(
     ${PROJECT_NAME}
-    pcap
+    libpcap.a
 )
