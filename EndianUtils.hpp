@@ -3,7 +3,6 @@
 
 #include <cstdint>
 #include <vector>
-#include <Elite/DataType.hpp>
 
 class EndianUtils {
 public:

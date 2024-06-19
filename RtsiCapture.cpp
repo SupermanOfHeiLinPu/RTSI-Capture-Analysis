@@ -66,6 +66,7 @@ void RtsiCapture::close(const TcpMessage& msg) {
     }
     if (connection_.find(client_id) != connection_.end()) {
         // TODO:保存日志
+        std::cout << "Client disconnect: " << msg.time_sec << "." << msg.time_us << std::endl;
         std::cout << connection_[client_id]->generateLog() << std::endl;
         connection_.erase(client_id);
     }
@@ -75,7 +76,10 @@ void RtsiCapture::close(const TcpMessage& msg) {
 RtsiConnection::RtsiConnection(const std::string& host_id, const std::string& client_id) : 
     host_id_(host_id),
     client_id_(client_id),
-    protocol_parser_(host_id) {
+    protocol_parser_(host_id),
+    control_version_parser_(host_id),
+    start_parser_(host_id),
+    pause_parser_(host_id) {
 
 }
 
@@ -121,10 +125,12 @@ bool RtsiConnection::parser(const TcpMessage& tm, const std::vector<uint8_t>& ms
         
         if (pt == RtsiPackageType::REQUEST_PROTOCOL_VERSION) {
             protocol_parser_.parser(tm, msg.begin() + parsered_len);
+            protocol_parser_.setRecvFlag();
         } else if (pt == RtsiPackageType::GET_ELITE_CONTROL_VERSION) {
-
+            control_version_parser_.parser(tm, msg.begin() + parsered_len);
+            control_version_parser_.setRecvFlag();
         } else if (pt == RtsiPackageType::TEXT_MESSAGE) {
-
+            // TODO:
         } else if (pt == RtsiPackageType::DATA_PACKAGE) {
 
         } else if (pt == RtsiPackageType::CONTROL_PACKAGE_SETUP_OUTPUTS) {
@@ -132,9 +138,11 @@ bool RtsiConnection::parser(const TcpMessage& tm, const std::vector<uint8_t>& ms
         } else if (pt == RtsiPackageType::CONTROL_PACKAGE_SETUP_INPUTS) {
 
         } else if (pt == RtsiPackageType::CONTROL_PACKAGE_START) {
-
+            start_parser_.parser(tm, msg.begin() + parsered_len);
+            start_parser_.setRecvFlag();
         }  else if (pt == RtsiPackageType::CONTROL_PACKAGE_PAUSE) {
-
+            pause_parser_.parser(tm, msg.begin() + parsered_len);
+            pause_parser_.setRecvFlag();
         } else {
             // TODO
         }
@@ -147,5 +155,8 @@ std::string RtsiConnection::generateLog() {
     std::stringstream result;
     result << "Client ID: " << client_id_ << std::endl;
     result << protocol_parser_.generateLog();
+    result << control_version_parser_.generateLog();
+    result << start_parser_.generateLog();
+    result << pause_parser_.generateLog();
     return result.str();
 }
