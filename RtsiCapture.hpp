@@ -31,6 +31,7 @@ private:
     RtsiParserControlVersion control_version_parser_;
     RtsiParserPause pause_parser_;
     RtsiParserStart start_parser_;
+    RtsiParserData data_parser_;
     bool parser(const TcpMessage&, const std::vector<uint8_t>&, int& parser_len);
 
 public:

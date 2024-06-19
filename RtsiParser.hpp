@@ -91,5 +91,22 @@ public:
     std::vector<RtsiTypeVariant> values_;
 };
 
+class RtsiParserData : public RtsiParser {
+private:
+    
+
+public:
+    RtsiParserData(const std::string& host_id) : RtsiParser(host_id) { }
+    virtual ~RtsiParserData() = default;
+    [[deprecated("Use another overloaded function")]]
+    virtual void parser(const TcpMessage&, const std::vector<uint8_t>::const_iterator&) {}
+
+    // virtual void parser(const TcpMessage&, 
+    //                     const std::vector<uint8_t>::const_iterator&, 
+    //                     std::array<RtsiRecipe, 255>&);
+
+    virtual std::string generateLog() { return ""; }
+};
+
 
 #endif

@@ -79,7 +79,8 @@ RtsiConnection::RtsiConnection(const std::string& host_id, const std::string& cl
     protocol_parser_(host_id),
     control_version_parser_(host_id),
     start_parser_(host_id),
-    pause_parser_(host_id) {
+    pause_parser_(host_id),
+    data_parser_(host_id) {
 
 }
 
