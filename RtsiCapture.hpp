@@ -3,9 +3,12 @@
 
 #include "TcpCapture.hpp"
 #include "RtsiParser.hpp"
+#include "RtsiParserData.hpp"
+#include "RtsiRecipe.hpp"
 #include <unordered_map>
 #include <string>
 #include <memory>
+#include <array>
 
 /**
  * @brief Rtsi package type
@@ -32,6 +35,8 @@ private:
     RtsiParserPause pause_parser_;
     RtsiParserStart start_parser_;
     RtsiParserData data_parser_;
+    std::array<RtsiRecipe, 255> orecipes_;
+    std::array<RtsiRecipe, 255> irecipes_;
     bool parser(const TcpMessage&, const std::vector<uint8_t>&, int& parser_len);
 
 public:

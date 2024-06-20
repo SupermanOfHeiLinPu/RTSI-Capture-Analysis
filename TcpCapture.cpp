@@ -90,7 +90,7 @@ void packet_handler(u_char *user_data, const struct pcap_pkthdr *pkthdr, const u
         for (size_t i = 0; i < tc.size(); i++) {
             tc[i]->established(tm);
         }
-    } else if (tcpHeader->fin) {
+    } else if (tcpHeader->fin || tcpHeader->rst) {
         for (size_t i = 0; i < tc.size(); i++) {
             tc[i]->close(tm);
         };

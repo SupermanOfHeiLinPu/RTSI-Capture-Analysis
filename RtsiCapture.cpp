@@ -80,7 +80,7 @@ RtsiConnection::RtsiConnection(const std::string& host_id, const std::string& cl
     control_version_parser_(host_id),
     start_parser_(host_id),
     pause_parser_(host_id),
-    data_parser_(host_id) {
+    data_parser_(host_id, orecipes_, irecipes_) {
 
 }
 
@@ -133,7 +133,7 @@ bool RtsiConnection::parser(const TcpMessage& tm, const std::vector<uint8_t>& ms
         } else if (pt == RtsiPackageType::TEXT_MESSAGE) {
             // TODO:
         } else if (pt == RtsiPackageType::DATA_PACKAGE) {
-
+            data_parser_.parser(tm, msg.begin() + parsered_len);
         } else if (pt == RtsiPackageType::CONTROL_PACKAGE_SETUP_OUTPUTS) {
 
         } else if (pt == RtsiPackageType::CONTROL_PACKAGE_SETUP_INPUTS) {
@@ -159,5 +159,6 @@ std::string RtsiConnection::generateLog() {
     result << control_version_parser_.generateLog();
     result << start_parser_.generateLog();
     result << pause_parser_.generateLog();
+    result << data_parser_.generateLog();
     return result.str();
 }

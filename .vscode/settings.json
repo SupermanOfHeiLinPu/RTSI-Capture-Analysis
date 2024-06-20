@@ -68,6 +68,7 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "source_location": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "queue": "cpp"
     }
 }

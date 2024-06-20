@@ -2,6 +2,7 @@
 #include "CommUtils.hpp"
 #include "EndianUtils.hpp"
 #include <sstream>
+#include <iomanip>
 
 
 void RtsiParserProtocol::parser(const TcpMessage& tm, const std::vector<uint8_t>::const_iterator& msg) {
