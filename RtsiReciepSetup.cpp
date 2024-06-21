@@ -17,7 +17,7 @@ std::vector<std::string> RtsiReciepSetup::parserString(const std::vector<uint8_t
 void RtsiReciepSetup::parserOutSetup(const TcpMessage& tm, 
                                      const std::vector<uint8_t>::const_iterator& msg,
                                      std::array<RtsiRecipe, 255>& recipes,
-                                     int recipe_count,
+                                     int& recipe_count,
                                      int pkg_len) {
 
     std::string src_id = CommUtils::buildID(tm);
@@ -28,8 +28,12 @@ void RtsiReciepSetup::parserOutSetup(const TcpMessage& tm,
         recipes[r_id].types_ = parserString(msg, 4, pkg_len, recipes[r_id]);
         recipes[r_id].is_raw_ = false;
     } else {
+        if (recipe_count >= 255) {
+            recipe_count = 1;
+        }
         EndianUtils::unpack(msg + 3, recipes[recipe_count].frequency_);
         recipes[recipe_count].names_ = parserString(msg, 11, pkg_len, recipes[recipe_count]);
+        recipe_count++;
     }
     
     
@@ -40,7 +44,7 @@ void RtsiReciepSetup::parserOutSetup(const TcpMessage& tm,
 void RtsiReciepSetup::parserInSetup(const TcpMessage& tm, 
                                     const std::vector<uint8_t>::const_iterator& msg,
                                     std::array<RtsiRecipe, 255>& recipes,
-                                    int recipe_count,
+                                    int& recipe_count,
                                     int pkg_len) {
 
     std::string src_id = CommUtils::buildID(tm);
@@ -52,6 +56,10 @@ void RtsiReciepSetup::parserInSetup(const TcpMessage& tm,
         recipes[r_id].is_raw_ = false;
 
     } else {
+        if (recipe_count >= 255) {
+            recipe_count = 1;
+        }
         recipes[recipe_count].names_ = parserString(msg, 3, pkg_len, recipes[recipe_count]);
+        recipe_count++;
     }
 }

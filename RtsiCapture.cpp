@@ -141,18 +141,10 @@ bool RtsiConnection::parser(const TcpMessage& tm, const std::vector<uint8_t>& ms
             data_parser_.parser(tm, msg.begin() + parsered_len);
 
         } else if (pt == RtsiPackageType::CONTROL_PACKAGE_SETUP_OUTPUTS) {
-            if (orecipe_count_ >= 255) {
-                orecipe_count_ = 1;
-            }
             setup_parser_.parserOutSetup(tm, msg.begin() + parsered_len, orecipes_, orecipe_count_, package_len);
-            orecipe_count_ ++;
 
         } else if (pt == RtsiPackageType::CONTROL_PACKAGE_SETUP_INPUTS) {
-            if (irecipe_count_ >= 255) {
-                irecipe_count_ = 1;
-            }
             setup_parser_.parserInSetup(tm, msg.begin() + parsered_len, irecipes_, irecipe_count_, package_len);
-            irecipe_count_ ++;
 
         } else if (pt == RtsiPackageType::CONTROL_PACKAGE_START) {
             start_parser_.parser(tm, msg.begin() + parsered_len);

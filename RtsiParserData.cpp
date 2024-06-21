@@ -35,7 +35,7 @@ void RtsiParserData::parserOutRecipe(const TcpMessage& tm, const std::vector<uin
         return;
     }
     
-    orecipes_[msg[3]].parser(tm, msg);
+    orecipes_[msg[3]].parser(tm, msg, true);
 }
 
 void RtsiParserData::parserInRecipe(const TcpMessage& tm, const std::vector<uint8_t>::const_iterator& msg) {

@@ -1,0 +1,30 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "x86-debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/rtsi_analysis",
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/",
+            "args": [
+                "eth0"
+            ],
+            "environment": [
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+              {
+                "description": "gdb pretty printing",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+              }
+            ]
+          }
+    ]
+}

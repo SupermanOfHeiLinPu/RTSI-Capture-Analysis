@@ -18,13 +18,13 @@ public:
     void parserOutSetup(const TcpMessage& tm, 
                         const std::vector<uint8_t>::const_iterator& msg,
                         std::array<RtsiRecipe, 255>& recipes,
-                        int recipe_count,
+                        int& recipe_count,
                         int pkg_len);
 
     void parserInSetup(const TcpMessage& tm, 
                         const std::vector<uint8_t>::const_iterator& msg,
                         std::array<RtsiRecipe, 255>& recipes,
-                        int recipe_count,
+                        int& recipe_count,
                         int pkg_len);
 
     [[deprecated("Use RtsiParserData::generateLog instead")]]

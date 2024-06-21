@@ -28,7 +28,7 @@ public:
 
     RtsiRecipe() : is_raw_(true), id_(-1) {}
 
-    void parser(const TcpMessage&, const std::vector<uint8_t>::const_iterator&);
+    void parser(const TcpMessage&, const std::vector<uint8_t>::const_iterator&, bool only_one = false);
     std::string generateLog();
 };
 

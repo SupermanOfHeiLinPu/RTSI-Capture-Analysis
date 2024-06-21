@@ -3,7 +3,7 @@
 #include <iomanip>
 
 
-void RtsiRecipe::parser(const TcpMessage& tm, const std::vector<uint8_t>::const_iterator& msg) {
+void RtsiRecipe::parser(const TcpMessage& tm, const std::vector<uint8_t>::const_iterator& msg, bool only_one ) {
     id_ = msg[3];
     double last_second = (double)last_time_.tv_sec + (last_time_.tv_usec / 1000000.0);
     double current_second = (double)tm.time_sec + (tm.time_us / 1000000.0);
@@ -13,17 +13,21 @@ void RtsiRecipe::parser(const TcpMessage& tm, const std::vector<uint8_t>::const_
     
     int16_t pkg_len;
     EndianUtils::unpack(msg, pkg_len);
-
-    if (values_.size() > 100) {
-        values_.pop_front();
-    }
     
     std::vector<uint8_t> value_buf;
     for (size_t i = 4; i < pkg_len; i++) {
         value_buf.push_back(msg[i]);
     }
-    values_.push_back(std::move(value_buf));
 
+    if (only_one) {
+        values_.clear();
+        values_.push_back(std::move(value_buf));
+    } else {
+        if (values_.size() > 100) {
+            values_.pop_front();
+        }
+        values_.push_back(std::move(value_buf));
+    }
 }
 
 std::string RtsiRecipe::generateRawLog() {
@@ -119,15 +123,16 @@ void RtsiRecipe::generateOneDataLog(const std::vector<uint8_t>& one, std::string
 
         }
     }
+    result << std::endl;
 }
 
 std::string RtsiRecipe::generateDataLog() {
     std::stringstream result;
-    result << "\t\tParsered Data:";
+    result << "\t\tParsered Data:\n";
     int count = 0;
     for(auto one : values_) {
         count++;
-        result << "\n\t\t\tHistory " << count <<": ";
+        result << "\t\t\tHistory " << count <<": ";
         generateOneDataLog(one, result);
     }
     return result.str();
