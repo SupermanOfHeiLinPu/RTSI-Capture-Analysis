@@ -14,6 +14,7 @@ class RtsiRecipe {
 private:
     std::string generateRawLog();
     std::string generateDataLog();
+    void generateOneDataLog(const std::vector<uint8_t>& one, std::stringstream& result);
 
 public:
     timeval last_time_;
@@ -22,7 +23,7 @@ public:
     double actual_frequency_;
     std::vector<std::string> names_;
     std::vector<std::string> types_;
-    std::list<std::vector<RtsiTypeVariant>> values_;
+    std::list<std::vector<uint8_t>> values_;
     bool is_raw_;
 
     RtsiRecipe() : is_raw_(true), id_(-1) {}

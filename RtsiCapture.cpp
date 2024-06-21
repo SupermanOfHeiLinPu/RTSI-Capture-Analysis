@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 static std::unordered_map<std::string, std::string> get_eth_list() {
     struct ifaddrs *ifa = NULL, *ifList;
@@ -135,9 +136,9 @@ bool RtsiConnection::parser(const TcpMessage& tm, const std::vector<uint8_t>& ms
         } else if (pt == RtsiPackageType::DATA_PACKAGE) {
             data_parser_.parser(tm, msg.begin() + parsered_len);
         } else if (pt == RtsiPackageType::CONTROL_PACKAGE_SETUP_OUTPUTS) {
-
+           // TODO
         } else if (pt == RtsiPackageType::CONTROL_PACKAGE_SETUP_INPUTS) {
-
+            // TODO
         } else if (pt == RtsiPackageType::CONTROL_PACKAGE_START) {
             start_parser_.parser(tm, msg.begin() + parsered_len);
             start_parser_.setRecvFlag();

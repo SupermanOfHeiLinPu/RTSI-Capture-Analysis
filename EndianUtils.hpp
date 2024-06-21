@@ -32,6 +32,15 @@ public:
         }
     }
 
+    template<typename T, int size>
+    static void unpackArr(const std::vector<uint8_t>::const_iterator& iter, std::array<T, size>& out_value) {
+        int offset = 0;
+        for (size_t i = 0; i < size; i++) {
+            unpack<T>(iter + offset, out_value[i]);
+            offset += sizeof(T);
+        }
+    }
+
 };
 
 
