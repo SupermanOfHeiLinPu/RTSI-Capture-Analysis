@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_executable(
     ${PROJECT_NAME}
+    RtsiReciepSetup.cpp
     RtsiRecipe.cpp
     RtsiParserData.cpp
     RtsiParser.cpp

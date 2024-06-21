@@ -5,6 +5,7 @@
 #include "RtsiParser.hpp"
 #include "RtsiParserData.hpp"
 #include "RtsiRecipe.hpp"
+#include "RtsiReciepSetup.hpp"
 #include <unordered_map>
 #include <string>
 #include <memory>
@@ -35,6 +36,9 @@ private:
     RtsiParserPause pause_parser_;
     RtsiParserStart start_parser_;
     RtsiParserData data_parser_;
+    RtsiReciepSetup setup_parser_;
+    int orecipe_count_;
+    int irecipe_count_;
     std::array<RtsiRecipe, 255> orecipes_;
     std::array<RtsiRecipe, 255> irecipes_;
     bool parser(const TcpMessage&, const std::vector<uint8_t>&, int& parser_len);

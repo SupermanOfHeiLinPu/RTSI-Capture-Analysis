@@ -81,8 +81,10 @@ RtsiConnection::RtsiConnection(const std::string& host_id, const std::string& cl
     control_version_parser_(host_id),
     start_parser_(host_id),
     pause_parser_(host_id),
-    data_parser_(host_id, orecipes_, irecipes_) {
-
+    data_parser_(host_id, orecipes_, irecipes_),
+    setup_parser_(host_id) {
+        orecipe_count_ = 1;
+        irecipe_count_ = 1;
 }
 
 RtsiConnection::~RtsiConnection() {
@@ -128,23 +130,38 @@ bool RtsiConnection::parser(const TcpMessage& tm, const std::vector<uint8_t>& ms
         if (pt == RtsiPackageType::REQUEST_PROTOCOL_VERSION) {
             protocol_parser_.parser(tm, msg.begin() + parsered_len);
             protocol_parser_.setRecvFlag();
+
         } else if (pt == RtsiPackageType::GET_ELITE_CONTROL_VERSION) {
             control_version_parser_.parser(tm, msg.begin() + parsered_len);
             control_version_parser_.setRecvFlag();
+
         } else if (pt == RtsiPackageType::TEXT_MESSAGE) {
             // TODO:
         } else if (pt == RtsiPackageType::DATA_PACKAGE) {
             data_parser_.parser(tm, msg.begin() + parsered_len);
+
         } else if (pt == RtsiPackageType::CONTROL_PACKAGE_SETUP_OUTPUTS) {
-           // TODO
+            if (orecipe_count_ >= 255) {
+                orecipe_count_ = 1;
+            }
+            setup_parser_.parserOutSetup(tm, msg.begin() + parsered_len, orecipes_, orecipe_count_, package_len);
+            orecipe_count_ ++;
+
         } else if (pt == RtsiPackageType::CONTROL_PACKAGE_SETUP_INPUTS) {
-            // TODO
+            if (irecipe_count_ >= 255) {
+                irecipe_count_ = 1;
+            }
+            setup_parser_.parserInSetup(tm, msg.begin() + parsered_len, irecipes_, irecipe_count_, package_len);
+            irecipe_count_ ++;
+
         } else if (pt == RtsiPackageType::CONTROL_PACKAGE_START) {
             start_parser_.parser(tm, msg.begin() + parsered_len);
             start_parser_.setRecvFlag();
+
         }  else if (pt == RtsiPackageType::CONTROL_PACKAGE_PAUSE) {
             pause_parser_.parser(tm, msg.begin() + parsered_len);
             pause_parser_.setRecvFlag();
+
         } else {
             // TODO
         }
