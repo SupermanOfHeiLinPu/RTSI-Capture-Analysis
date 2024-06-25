@@ -60,13 +60,16 @@ private:
     std::string host_id_;
     std::unordered_map<std::string, std::shared_ptr<RtsiConnection>> connection_;
     std::mutex mutex_;
+    std::string save_path_;
+
+    bool createDirectories(const std::string& path);
 public:
     RtsiCapture(const std::string& eth);
     virtual void analysis(const TcpMessage&);
     virtual void established(const TcpMessage&);
     virtual void close(const TcpMessage&);
     
-    void saveConnectionsToFile();
+    bool saveConnectionsToFile();
 };
 
 

@@ -11,8 +11,7 @@ private:
 public:
     RtsiSaveConnections(RtsiCapture& cap) : cap_(cap) {}
     void execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value* const retvalP) {
-        cap_.saveConnectionsToFile();
-        *retvalP = xmlrpc_c::value_int(0);
+        *retvalP = xmlrpc_c::value_boolean(cap_.saveConnectionsToFile());
     }
 };
 
