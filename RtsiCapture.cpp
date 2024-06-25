@@ -13,6 +13,9 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <string.h>
+#include <dirent.h>
+#include <regex>
+#include <algorithm>
 
 
 static std::unordered_map<std::string, std::string> get_eth_list() {
@@ -38,6 +41,44 @@ RtsiCapture::RtsiCapture(const std::string& eth) {
     auto eth_list = get_eth_list();
     host_id_ = CommUtils::buildID(eth_list[eth], 30004);
     save_path_ = "/home/elite/EliRobot/program/rtsi_cap_log/";
+    dis_save_file_name_ = "disconnect_save_analysis";
+    dis_save_file_count_ = 0;
+    dis_save_file_max_count_ = 5;
+    DIR* sd = opendir(save_path_.c_str());
+    if (sd != nullptr) {
+        dirent* dirp = nullptr;
+        while ((dirp = readdir(sd)) != nullptr) {
+            std::string fn(dirp->d_name);
+            if (fn.find(dis_save_file_name_) != std::string::npos) {
+                dis_save_file_count_++;
+                dis_save_file_name_list_.push_back(save_path_ + fn);
+            }
+        }
+        if (dis_save_file_name_list_.size() > 0) {
+            dis_save_file_name_list_.sort([&](std::string& f1, std::string& f2) {
+                int f1_count = extractCount(f1);
+                int f2_count = extractCount(f2);
+                if (dis_save_file_count_ < f1_count) {
+                    dis_save_file_count_ = f1_count;
+                }
+                if (dis_save_file_count_ < f2_count) {
+                    dis_save_file_count_ = f2_count;
+                }
+                return f1_count < f2_count;
+            });
+        }
+        dis_save_file_count_++;
+        closedir(sd);
+    }
+}
+
+int RtsiCapture::extractCount(const std::string& filename) {
+    std::regex re(".*" + dis_save_file_name_ + "(\\d+)\\.txt");
+    std::smatch match;
+    if (std::regex_search(filename, match, re)) {
+        return std::stoi(match[1].str());
+    }
+    return -1;  // 如果格式不匹配，返回-1
 }
 
 void RtsiCapture::analysis(const TcpMessage& tm) {
@@ -77,9 +118,28 @@ void RtsiCapture::close(const TcpMessage& msg) {
 
     std::lock_guard<std::mutex> lock(mutex_);
     if (connection_.find(client_id) != connection_.end()) {
-        // TODO:保存日志
-        std::cout << "Client disconnect: " << msg.time_sec << "." << msg.time_us << std::endl;
-        std::cout << connection_[client_id]->generateLog() << std::endl;
+        std::string file_name = save_path_ + dis_save_file_name_ + std::to_string(dis_save_file_count_) + ".txt";
+        std::ofstream fs(file_name);
+        if (!fs.is_open()) {
+            if (!createDirectories(save_path_)) {
+                goto done;
+            } else {
+                fs.open(file_name);
+                if (!fs.is_open()) {
+                    goto done;
+                }   
+            }   
+        }
+        if (dis_save_file_name_list_.size() > dis_save_file_max_count_) {
+            std::string delete_file_name;
+            remove(dis_save_file_name_list_.front().c_str());
+            dis_save_file_name_list_.pop_front();
+        }
+        fs << "Client disconnect: " << msg.time_sec << "." << msg.time_us << std::endl;
+        fs << connection_[client_id]->generateLog() << std::endl;
+        dis_save_file_name_list_.push_back(file_name);
+        dis_save_file_count_++;
+done:
         connection_.erase(client_id);
     }
 }
@@ -102,12 +162,13 @@ bool RtsiCapture::createDirectories(const std::string& path) {
 }
 
 bool RtsiCapture::saveConnectionsToFile() {
-    std::ofstream fs(save_path_ + "save_analysis.txt");
+    std::string file_name = save_path_ + "save_analysis.txt";
+    std::ofstream fs(file_name);
     if (!fs.is_open()) {
         if (!createDirectories(save_path_)) {
             return false;
         } else {
-            fs.open(save_path_ + "save_analysis.txt");
+            fs.open(file_name);
             if (!fs.is_open()) {
                 return false;
             }

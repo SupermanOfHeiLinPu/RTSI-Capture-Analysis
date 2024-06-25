@@ -13,6 +13,7 @@
 #include <fstream>
 #include <mutex>
 #include <functional>
+#include <list>
 
 /**
  * @brief Rtsi package type
@@ -61,8 +62,13 @@ private:
     std::unordered_map<std::string, std::shared_ptr<RtsiConnection>> connection_;
     std::mutex mutex_;
     std::string save_path_;
+    std::string dis_save_file_name_;
+    unsigned int dis_save_file_count_;
+    unsigned int dis_save_file_max_count_;
+    std::list<std::string> dis_save_file_name_list_;
 
     bool createDirectories(const std::string& path);
+    int extractCount(const std::string& filename);
 public:
     RtsiCapture(const std::string& eth);
     virtual void analysis(const TcpMessage&);
