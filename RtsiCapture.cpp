@@ -41,6 +41,7 @@ void RtsiCapture::analysis(const TcpMessage& tm) {
         client_id = CommUtils::buildID(tm.dst_ip, tm.dst_port);
     }
     
+    std::lock_guard<std::mutex> lock(mutex_);
     if (connection_.find(client_id) == connection_.end()) {
         auto con = std::make_shared<RtsiConnection>(host_id_, client_id);
         connection_.insert({client_id, con});
@@ -53,6 +54,8 @@ void RtsiCapture::established(const TcpMessage& msg) {
     if (host_id_ == client_id) {
         return;
     }
+
+    std::lock_guard<std::mutex> lock(mutex_);
     if (connection_.find(client_id) != connection_.end()) {
         connection_.erase(client_id);
     }
@@ -65,6 +68,8 @@ void RtsiCapture::close(const TcpMessage& msg) {
     if (host_id_ == client_id) {
         return;
     }
+
+    std::lock_guard<std::mutex> lock(mutex_);
     if (connection_.find(client_id) != connection_.end()) {
         // TODO:保存日志
         std::cout << "Client disconnect: " << msg.time_sec << "." << msg.time_us << std::endl;
@@ -73,6 +78,9 @@ void RtsiCapture::close(const TcpMessage& msg) {
     }
 }
 
+void RtsiCapture::saveConnectionsToFile() {
+
+}
 
 RtsiConnection::RtsiConnection(const std::string& host_id, const std::string& client_id) : 
     host_id_(host_id),

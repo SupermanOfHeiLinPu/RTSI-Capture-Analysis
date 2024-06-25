@@ -10,6 +10,9 @@
 #include <string>
 #include <memory>
 #include <array>
+#include <fstream>
+#include <mutex>
+#include <functional>
 
 /**
  * @brief Rtsi package type
@@ -56,12 +59,14 @@ class RtsiCapture :public TcpCapture {
 private:
     std::string host_id_;
     std::unordered_map<std::string, std::shared_ptr<RtsiConnection>> connection_;
+    std::mutex mutex_;
 public:
     RtsiCapture(const std::string& eth);
     virtual void analysis(const TcpMessage&);
     virtual void established(const TcpMessage&);
     virtual void close(const TcpMessage&);
-
+    
+    void saveConnectionsToFile();
 };
 
 
