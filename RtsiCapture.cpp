@@ -39,7 +39,21 @@ static std::unordered_map<std::string, std::string> get_eth_list() {
 
 RtsiCapture::RtsiCapture(const std::string& eth) {
     auto eth_list = get_eth_list();
-    host_id_ = CommUtils::buildID(eth_list[eth], 30004);
+    eth_device_ = eth;
+    if (eth_device_.length() <= 0) {
+        if (eth_list.find("enp5s0") != eth_list.end()) {
+            eth_device_ = "enp5s0";
+        } else {
+            for (auto& eth_item : eth_list) {
+                if (eth_item.first != "lo") {
+                    eth_device_ = eth_item.first;
+                    break;
+                }
+            }
+        }
+    }
+
+    host_id_ = CommUtils::buildID(eth_list[eth_device_], 30004);
     save_path_ = "/home/elite/EliRobot/program/rtsi_cap_log/";
     dis_save_file_name_ = "disconnect_save_analysis";
     dis_save_file_count_ = 0;
@@ -141,6 +155,8 @@ void RtsiCapture::close(const TcpMessage& msg) {
         dis_save_file_count_++;
 done:
         connection_.erase(client_id);
+        fs.close();
+        chmod(file_name.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH | S_IWGRP | S_IWOTH);
     }
 }
 
@@ -151,7 +167,10 @@ bool RtsiCapture::createDirectories(const std::string& path) {
     while ((pos = path.find_first_of('/', pre)) != std::string::npos) {
         dir = path.substr(0, pos++);
         pre = pos;
-        if (dir.empty()) continue; // 跳过根路径（例如"/"）
+        if (dir.empty()) {
+            // 跳过根路径（例如"/"）
+            continue;
+        } 
 
         if ((mdret = mkdir(dir.c_str(), S_IRWXU)) && errno != EEXIST) {
             std::cerr << "Error creating directory " << dir << ": " << strerror(errno) << std::endl;
@@ -179,6 +198,8 @@ bool RtsiCapture::saveConnectionsToFile() {
     for (auto& con : connection_) {
         fs << con.second->generateLog() << std::endl;
     }
+    fs.close();
+    chmod(file_name.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH | S_IWGRP | S_IWOTH);
 }
 
 RtsiConnection::RtsiConnection(const std::string& host_id, const std::string& client_id) : 

@@ -58,6 +58,7 @@ public:
 
 class RtsiCapture :public TcpCapture {
 private:
+    std::string eth_device_;
     std::string host_id_;
     std::unordered_map<std::string, std::shared_ptr<RtsiConnection>> connection_;
     std::mutex mutex_;
@@ -74,6 +75,7 @@ public:
     virtual void analysis(const TcpMessage&);
     virtual void established(const TcpMessage&);
     virtual void close(const TcpMessage&);
+    std::string getEthDevice() { return eth_device_; }
     
     bool saveConnectionsToFile();
 };
