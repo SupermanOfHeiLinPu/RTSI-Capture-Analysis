@@ -34,7 +34,6 @@ class RtsiConnection {
 private:
     std::string client_id_;
     std::string host_id_;
-    std::vector<uint8_t> buffer_;
     RtsiParserProtocol protocol_parser_;
     RtsiParserControlVersion control_version_parser_;
     RtsiParserPause pause_parser_;
@@ -48,6 +47,8 @@ private:
     bool parser(const TcpMessage&, const std::vector<uint8_t>&, int& parser_len, const std::string& source_id);
     std::list<std::vector<uint8_t>> host_raw_data_;
     std::list<std::vector<uint8_t>> client_raw_data_;
+    std::vector<uint8_t> host_buffer_;
+    std::vector<uint8_t> client_buffer_;
     bool at_start_;
 public:
     RtsiConnection(const std::string& host_id, const std::string& client_id, bool at_start);

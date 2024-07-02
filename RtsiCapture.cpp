@@ -223,15 +223,20 @@ RtsiConnection::~RtsiConnection() {
 }
 
 void RtsiConnection::analysis(const TcpMessage& tm, const std::string& source_id) {
-    if(buffer_.size() > 0) {
-        buffer_.insert(buffer_.end(), tm.data.begin(), tm.data.end());
+    auto buff_ptr = &client_buffer_;
+    if (source_id == host_id_) {
+        buff_ptr = &host_buffer_;
+    }
+    
+    if(buff_ptr->size() > 0) {
+        buff_ptr->insert(buff_ptr->end(), tm.data.begin(), tm.data.end());
         int parser_len = 0;
-        if(!parser(tm, buffer_, parser_len, source_id)) {
+        if(!parser(tm, *buff_ptr, parser_len, source_id)) {
             // TODO
         }
         // remove parsered message
         if (parser_len > 0) {
-            buffer_.erase(buffer_.begin(), buffer_.begin() + parser_len);
+            buff_ptr->erase(buff_ptr->begin(), buff_ptr->begin() + parser_len);
         }
     } else {
         int parser_len = 0;
@@ -240,7 +245,7 @@ void RtsiConnection::analysis(const TcpMessage& tm, const std::string& source_id
         }
         // Adds the remaining unparsed packets to the buffer
         if (parser_len < tm.data.size()) {
-            buffer_.insert(buffer_.end(), tm.data.begin() + parser_len, tm.data.end());
+            buff_ptr->insert(buff_ptr->end(), tm.data.begin() + parser_len, tm.data.end());
         }
     }
 }
