@@ -45,12 +45,14 @@ private:
     int irecipe_count_;
     std::array<RtsiRecipe, 255> orecipes_;
     std::array<RtsiRecipe, 255> irecipes_;
-    bool parser(const TcpMessage&, const std::vector<uint8_t>&, int& parser_len);
-
+    bool parser(const TcpMessage&, const std::vector<uint8_t>&, int& parser_len, const std::string& source_id);
+    std::list<std::vector<uint8_t>> host_raw_data_;
+    std::list<std::vector<uint8_t>> client_raw_data_;
+    bool at_start_;
 public:
-    RtsiConnection(const std::string& host_id, const std::string& client_id);
+    RtsiConnection(const std::string& host_id, const std::string& client_id, bool at_start);
     ~RtsiConnection();
-    void analysis(const TcpMessage&);
+    void analysis(const TcpMessage& tm, const std::string& source_id);
     std::string generateLog();
 };
 

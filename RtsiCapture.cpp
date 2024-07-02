@@ -16,6 +16,7 @@
 #include <dirent.h>
 #include <regex>
 #include <algorithm>
+#include <iomanip>
 
 
 static std::unordered_map<std::string, std::string> get_eth_list() {
@@ -97,6 +98,7 @@ int RtsiCapture::extractCount(const std::string& filename) {
 
 void RtsiCapture::analysis(const TcpMessage& tm) {
     std::string client_id = CommUtils::buildID(tm);
+    std::string source_id = client_id;
 
     if (client_id == host_id_) {
         client_id = CommUtils::buildID(tm.dst_ip, tm.dst_port);
@@ -104,10 +106,10 @@ void RtsiCapture::analysis(const TcpMessage& tm) {
     
     std::lock_guard<std::mutex> lock(mutex_);
     if (connection_.find(client_id) == connection_.end()) {
-        auto con = std::make_shared<RtsiConnection>(host_id_, client_id);
+        auto con = std::make_shared<RtsiConnection>(host_id_, client_id, false);
         connection_.insert({client_id, con});
     }
-    connection_[client_id]->analysis(tm);
+    connection_[client_id]->analysis(tm, source_id);
 }
 
 void RtsiCapture::established(const TcpMessage& msg) {
@@ -120,7 +122,7 @@ void RtsiCapture::established(const TcpMessage& msg) {
     if (connection_.find(client_id) != connection_.end()) {
         connection_.erase(client_id);
     }
-    auto con = std::make_shared<RtsiConnection>(host_id_, client_id);
+    auto con = std::make_shared<RtsiConnection>(host_id_, client_id, true);
     connection_.insert({client_id, con});
 }
 
@@ -202,7 +204,7 @@ bool RtsiCapture::saveConnectionsToFile() {
     chmod(file_name.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH | S_IWGRP | S_IWOTH);
 }
 
-RtsiConnection::RtsiConnection(const std::string& host_id, const std::string& client_id) : 
+RtsiConnection::RtsiConnection(const std::string& host_id, const std::string& client_id, bool at_start) : 
     host_id_(host_id),
     client_id_(client_id),
     protocol_parser_(host_id),
@@ -213,17 +215,18 @@ RtsiConnection::RtsiConnection(const std::string& host_id, const std::string& cl
     setup_parser_(host_id) {
         orecipe_count_ = 1;
         irecipe_count_ = 1;
+        at_start_ = at_start;
 }
 
 RtsiConnection::~RtsiConnection() {
 
 }
 
-void RtsiConnection::analysis(const TcpMessage& tm) {
+void RtsiConnection::analysis(const TcpMessage& tm, const std::string& source_id) {
     if(buffer_.size() > 0) {
         buffer_.insert(buffer_.end(), tm.data.begin(), tm.data.end());
         int parser_len = 0;
-        if(!parser(tm, buffer_, parser_len)) {
+        if(!parser(tm, buffer_, parser_len, source_id)) {
             // TODO
         }
         // remove parsered message
@@ -232,7 +235,7 @@ void RtsiConnection::analysis(const TcpMessage& tm) {
         }
     } else {
         int parser_len = 0;
-        if(!parser(tm, tm.data, parser_len)) {
+        if(!parser(tm, tm.data, parser_len, source_id)) {
             // TODO
         }
         // Adds the remaining unparsed packets to the buffer
@@ -242,7 +245,20 @@ void RtsiConnection::analysis(const TcpMessage& tm) {
     }
 }
 
-bool RtsiConnection::parser(const TcpMessage& tm, const std::vector<uint8_t>& msg, int& parsered_len) {
+bool RtsiConnection::parser(const TcpMessage& tm, const std::vector<uint8_t>& msg, int& parsered_len, const std::string& source_id) {
+    if (!at_start_) {
+        auto save_list = &client_raw_data_;
+        if (source_id == host_id_) {
+            save_list = &host_raw_data_;
+        }
+        if (save_list->size() > 50) {
+            save_list->pop_front();
+        }
+        save_list->push_back(msg);
+        parsered_len = msg.size();
+        return true;
+    }
+    
     uint16_t package_len = 0;
     parsered_len = 0;
     if (msg.size() < 3) {
@@ -293,10 +309,41 @@ bool RtsiConnection::parser(const TcpMessage& tm, const std::vector<uint8_t>& ms
 std::string RtsiConnection::generateLog() {
     std::stringstream result;
     result << "Client ID: " << client_id_ << std::endl;
-    result << protocol_parser_.generateLog();
-    result << control_version_parser_.generateLog();
-    result << start_parser_.generateLog();
-    result << pause_parser_.generateLog();
-    result << data_parser_.generateLog();
+    if (at_start_) {
+        result << protocol_parser_.generateLog();
+        result << control_version_parser_.generateLog();
+        result << start_parser_.generateLog();
+        result << pause_parser_.generateLog();
+        result << data_parser_.generateLog();
+    } else {
+        result << "Since this plug-in is not started before the connection, it only records the raw data" << std::endl;
+        int count = 0;
+        for (auto& buf : host_raw_data_) {
+            result << "\nRaw host message " << count << ": ";
+            count++;
+            for (int i = 0; i < buf.size(); i++) {
+                if (i % 16 == 0) {
+                    result << "\n\t";
+                }
+                result << std::setfill('0') << std::setw(2) 
+                    << std::hex << (int)buf[i] 
+                    << " " << std::dec;
+            }
+        }
+
+        count = 0;
+        for (auto& buf : client_raw_data_) {
+            result << "\nRaw client message " << count << ": ";
+            count++;
+            for (int i = 0; i < buf.size(); i++) {
+                if (i % 16 == 0) {
+                    result << "\n\t";
+                }
+                result << std::setfill('0') << std::setw(2) 
+                    << std::hex << (int)buf[i] 
+                    << " " << std::dec;
+            }
+        }
+    }
     return result.str();
 }
